@@ -50,7 +50,7 @@ public interface CategoryMapper {
     void update(Category category);
 
     /**
-     * 根据类型查询分类
+     * 根据类型查询分类(菜品管理中调用)
      *
      * @param type
      * @return
