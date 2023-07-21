@@ -32,4 +32,11 @@
         </set>
         where id=#{id}
     </update>
+    <!--根据分类id查询菜品-->
+    <select id="list" resultType="com.sky.entity.Dish">
+        select * from dish
+        where status = 1
+        <if test="categoryId != null">and category_id = #{categoryId}</if>
+        order by create_time desc
+    </select>
 </mapper>
