@@ -11,3 +11,8 @@ sky:
     access-key-id: LTAI5tS2HgVG9deQiHYAQ8Yc
     access-key-secret: K2w5lYeDfdgwjH6Ov0yH83jkVWMsi9
     bucket-name: szl-bucket-4test
+  redis:
+    host: localhost
+    port: 6379
+    password: 1234
+    database: 10
