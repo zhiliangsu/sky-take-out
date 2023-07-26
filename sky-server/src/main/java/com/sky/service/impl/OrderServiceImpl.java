@@ -170,24 +170,27 @@ public class OrderServiceImpl implements OrderService {
     public PageResult pageQuery(OrdersPageQueryDTO ordersPageQueryDTO) {
         // 设置分页
         PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+        // 设置userId
         ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());
-        // 分页条件查询
-        Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
+        // 分页条件查询, 得到满足条件的订单列表
+        Page<Orders> ordersList = orderMapper.pageQuery(ordersPageQueryDTO);
 
-        // 查询订单明细, 并封装OrderVO进行响应
-        List<OrderVO> list = new ArrayList<>();
-        if (page != null && page.getTotal() > 0) {
+        // 封装OrderVO进行响应
+        List<OrderVO> orderVOList = new ArrayList<>();
+        if (ordersList != null && ordersList.getTotal() > 0) {
             // 遍历page对象, 获取订单id, 查询订单明细
-            for (Orders order : page) {
-                Long orderId = order.getId();
-                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(orderId);
+            for (Orders order : ordersList) {
+                // 复制共同字段
                 OrderVO orderVO = new OrderVO();
                 BeanUtils.copyProperties(order, orderVO);
+                // 根据orderId获取每张订单的菜品列表
+                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(order.getId());
                 orderVO.setOrderDetailList(orderDetails);
-                list.add(orderVO);
+                // 添加到orderVOList中
+                orderVOList.add(orderVO);
             }
         }
-        return new PageResult(page.getTotal(), list);
+        return new PageResult(ordersList.getTotal(), orderVOList);
     }
 
     /**
@@ -276,7 +279,7 @@ public class OrderServiceImpl implements OrderService {
             shoppingCartMapper.insert(shoppingCart);
         } */
 
-        // 方式二:
+        // 方式二: 参考答案
         // 将订单详情对象转换为购物车对象
         List<ShoppingCart> shoppingCartList = orderDetails.stream().map(x -> {
             ShoppingCart shoppingCart = new ShoppingCart();
@@ -290,5 +293,39 @@ public class OrderServiceImpl implements OrderService {
         shoppingCartMapper.insertBatch(shoppingCartList);
     }
 
+    /**
+     * 订单条件查询
+     *
+     * @param ordersPageQueryDTO
+     * @return
+     */
+    @Override
+    public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+        // 设置分页
+        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+        // 分页条件查询, 得到满足条件的订单列表
+        Page<Orders> ordersList = orderMapper.pageQuery(ordersPageQueryDTO);
 
+        // 封装OrderVO进行响应
+        List<OrderVO> orderVOList = new ArrayList<>();
+        if (ordersList != null && ordersList.getTotal() > 0) {
+            // 遍历page对象, 获取订单id, 查询订单明细
+            for (Orders order : ordersList) {
+                // 复制共同字段
+                OrderVO orderVO = new OrderVO();
+                BeanUtils.copyProperties(order, orderVO);
+
+                // 根据orderId获取每张订单里的每个菜品或套餐信息, 拼接成字符串
+                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(order.getId());
+                StringBuilder orderDishes = new StringBuilder();
+                orderDetails.forEach(orderDetail -> orderDishes.append(orderDetail.getName()).append("*")
+                        .append(orderDetail.getNumber()).append(";"));
+                orderVO.setOrderDishes(orderDishes.toString());
+
+                // 添加到orderVOList中
+                orderVOList.add(orderVO);
+            }
+        }
+        return new PageResult(ordersList.getTotal(), orderVOList);
+    }
 }
