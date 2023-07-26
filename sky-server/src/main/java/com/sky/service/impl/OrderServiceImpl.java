@@ -422,4 +422,23 @@ public class OrderServiceImpl implements OrderService {
         order.setCancelTime(LocalDateTime.now());
         orderMapper.update(order);
     }
+
+    /**
+     * 派送订单
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public void delivery(Long id) {
+        // 根据id查询订单
+        Orders order = orderMapper.getById(id);
+        // 订单只有存在且状态为2(待接单)才可以拒单
+        if (order == null || !order.getStatus().equals(Orders.CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        // 更新订单状态为派送中
+        order.setStatus(Orders.DELIVERY_IN_PROGRESS);
+        orderMapper.update(order);
+    }
 }
