@@ -5,10 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersConfirmDTO;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -358,6 +355,40 @@ public class OrderServiceImpl implements OrderService {
                 .id(ordersConfirmDTO.getId())
                 .status(Orders.CONFIRMED)
                 .build();
+        orderMapper.update(order);
+    }
+
+    /**
+     * 拒单
+     *
+     * @param ordersRejectionDTO
+     * @return
+     */
+    @Override
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) throws Exception {
+        // 根据id查询订单
+        Orders order = orderMapper.getById(ordersRejectionDTO.getId());
+        // 订单只有存在且状态为2(待接单)才可以拒单
+        if (order == null || !order.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 确认订单支付状态,如果用户已支付,需要退款
+        Integer payStatus = order.getPayStatus();
+        if (payStatus == Orders.PAID) {
+            // 调用微信支付退款接口
+            /* String refund = weChatPayUtil.refund(
+                    order.getNumber(),  // 商户订单号
+                    order.getNumber(),  // 商户退款单号
+                    new BigDecimal(0.01),   // 退款金额，单位 元
+                    new BigDecimal(0.01));// 原订单金额
+            log.info("申请退款: {}", refund); */
+        }
+        // 退款成功后, 根据订单id修改订单支付状态, 订单状态, 拒单原因, 取消时间
+        order.setStatus(Orders.CANCELLED);
+        order.setPayStatus(Orders.REFUND);
+        order.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        order.setCancelTime(LocalDateTime.now());
         orderMapper.update(order);
     }
 }
