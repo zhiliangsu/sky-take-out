@@ -433,12 +433,32 @@ public class OrderServiceImpl implements OrderService {
     public void delivery(Long id) {
         // 根据id查询订单
         Orders order = orderMapper.getById(id);
-        // 订单只有存在且状态为2(待接单)才可以拒单
+        // 订单只有存在且状态为3(待派送)才可以派送
         if (order == null || !order.getStatus().equals(Orders.CONFIRMED)) {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
         // 更新订单状态为派送中
         order.setStatus(Orders.DELIVERY_IN_PROGRESS);
+        orderMapper.update(order);
+    }
+
+    /**
+     * 完成订单
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public void complete(Long id) {
+        // 根据id查询订单
+        Orders order = orderMapper.getById(id);
+        // 订单只有存在且状态为4(派送中)才可以完成订单
+        if (order == null || !order.getStatus().equals(Orders.CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        // 更新订单状态为已完成
+        order.setStatus(Orders.COMPLETED);
+        order.setDeliveryTime(LocalDateTime.now());
         orderMapper.update(order);
     }
 }
