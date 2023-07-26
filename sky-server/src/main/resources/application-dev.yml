@@ -17,12 +17,16 @@ sky:
     password: 1234
     database: 10
   wechat:
-    appid: wx0bf28af5c12020c5 # 小程序的appid
-    secret: 7588719f5a7031e8fef1ec357bf8623c # 小程序的秘钥
-    mchid: 1561414331 # 商户号
-    mchSerialNo: 4B3B3DC35414AD50B1B755BAF8DE9CC7CF407606 # 商户API证书的证书序列号
-    privateKeyFilePath: D:\apiclient_key.pem # 商户私钥文件
-    apiV3Key: CZBK51236435wxpay435434323FFDuv3 # 证书解密的密钥
-    weChatPayCertFilePath: D:\wechatpay_166D96F876F45C7D07CE98952A96EC980368ACFC.pem # 平台证书
-    notifyUrl: https://www.weixin.qq.com/wxpay/pay.php # 支付成功的回调地址
-    refundNotifyUrl: https://www.weixin.qq.com/wxpay/pay.php # 退款成功的回调地址
+    appid: wx0bf28af5c12020c5 #小程序的appid
+    secret: 7588719f5a7031e8fef1ec357bf8623c #小程序的秘钥
+    mchid: 1561414331 #商户号
+    mchSerialNo: 4B3B3DC35414AD50B1B755BAF8DE9CC7CF407606 #商户API证书的证书序列号
+    privateKeyFilePath: D:\apiclient_key.pem #商户私钥文件
+    apiV3Key: CZBK51236435wxpay435434323FFDuv3 #证书解密的密钥
+    weChatPayCertFilePath: D:\wechatpay_166D96F876F45C7D07CE98952A96EC980368ACFC.pem #平台证书
+    notifyUrl: https://www.weixin.qq.com/wxpay/pay.php #支付成功的回调地址
+    refundNotifyUrl: https://www.weixin.qq.com/wxpay/pay.php #退款成功的回调地址
+  shop:
+    address: 广州市天河区凤凰街道柯木塱榄元新街16号 #外卖商家店铺地址
+  baidu:
+    ak: XlnWzE4woKbuGspA647lyxfipsQ33N0C  #百度地图的ak
