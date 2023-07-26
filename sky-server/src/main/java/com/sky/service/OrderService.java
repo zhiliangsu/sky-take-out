@@ -48,4 +48,12 @@ public interface OrderService {
      * @return
      */
     OrderVO queryOrderDetail(Long id);
+
+    /**
+     * 根据id取消订单
+     *
+     * @param id
+     * @return
+     */
+    void cancelOrder(Long id) throws Exception;
 }

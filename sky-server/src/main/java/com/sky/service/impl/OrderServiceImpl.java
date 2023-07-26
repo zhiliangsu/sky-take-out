@@ -74,7 +74,7 @@ public class OrderServiceImpl implements OrderService {
         Orders order = new Orders();
         BeanUtils.copyProperties(ordersSubmitDTO, order);
         order.setNumber(String.valueOf(System.currentTimeMillis()));
-        order.setStatus(Orders.UN_PAID);
+        order.setStatus(Orders.PENDING_PAYMENT);
         order.setUserId(userId);
         order.setOrderTime(LocalDateTime.now());
         order.setPayStatus(Orders.UN_PAID);
@@ -211,5 +211,44 @@ public class OrderServiceImpl implements OrderService {
         BeanUtils.copyProperties(order, orderVO);
         orderVO.setOrderDetailList(orderDetails);
         return orderVO;
+    }
+
+    /**
+     * 根据id取消订单
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public void cancelOrder(Long id) throws Exception {
+        // 根据id查询订单
+        Orders order = orderMapper.getById(id);
+        Integer status = order.getStatus();
+        // 校验订单是否存在
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
+        if (status > 2) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        // 订单处于待接单状态下取消, 需要进行退款
+        if (status == Orders.TO_BE_CONFIRMED) {
+            // 调用微信支付退款接口
+            /* weChatPayUtil.refund(
+                    order.getNumber(),  // 商户订单号
+                    order.getNumber(),  // 商户退款单号
+                    new BigDecimal(0.01),   // 退款金额，单位 元
+                    new BigDecimal(0.01));  // 原订单金额 */
+
+            // 修改订单支付状态为退款
+            order.setPayStatus(Orders.REFUND);
+        }
+
+        // 更新订单状态, 取消原因, 取消时间
+        order.setStatus(Orders.CANCELLED);
+        order.setCancelReason("用户取消");
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
     }
 }
