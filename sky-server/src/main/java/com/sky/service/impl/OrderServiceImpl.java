@@ -188,4 +188,28 @@ public class OrderServiceImpl implements OrderService {
         }
         return new PageResult(page.getTotal(), list);
     }
+
+    /**
+     * 根据id查询订单详情
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional
+    public OrderVO queryOrderDetail(Long id) {
+        // 1.根据id查询订单
+        Orders order = orderMapper.getById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 2.根据订单id查询订单明细
+        List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(id);
+
+        // 3.封装OrderVO并返回响应结果
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(order, orderVO);
+        orderVO.setOrderDetailList(orderDetails);
+        return orderVO;
+    }
 }
