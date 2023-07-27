@@ -171,11 +171,11 @@ public class OrderServiceImpl implements OrderService {
     public void paySuccess(String outTradeNo) {
 
         // 根据订单号查询订单
-        Orders ordersDB = orderMapper.getByNumber(outTradeNo);
+        Orders orderDB = orderMapper.getByNumber(outTradeNo);
 
         // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
         Orders order = Orders.builder()
-                .id(ordersDB.getId())
+                .id(orderDB.getId())
                 .status(Orders.TO_BE_CONFIRMED)
                 .payStatus(Orders.PAID)
                 .checkoutTime(LocalDateTime.now())
@@ -186,7 +186,7 @@ public class OrderServiceImpl implements OrderService {
         // 实现来单提醒功能
         Map map = new HashMap();
         map.put("type", 1); // 消息类型: 1代表来单提醒 2代表催单提醒
-        map.put("orderId", ordersDB.getId()); // 订单id
+        map.put("orderId", orderDB.getId()); // 订单id
         map.put("content", "订单号: " + outTradeNo); // 提示消息: 订单号
         webSocketServer.sendToAllClient(JSON.toJSONString(map));
     }
@@ -507,6 +507,23 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(Orders.COMPLETED);
         order.setDeliveryTime(LocalDateTime.now());
         orderMapper.update(order);
+    }
+
+    @Override
+    public void reminder(Long id) {
+        // 根据id查询订单
+        Orders orderDB = orderMapper.getById(id);
+        // 查询订单是否存在
+        if (orderDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 实现用户催单功能
+        Map map = new HashMap();
+        map.put("type", 2); // 消息类型: 1代表来单提醒 2代表催单提醒
+        map.put("orderId", orderDB.getId()); // 订单id
+        map.put("content", "订单号: " + orderDB.getNumber()); // 提示消息: 订单号
+        webSocketServer.sendToAllClient(JSON.toJSONString(map));
     }
 
     /**
