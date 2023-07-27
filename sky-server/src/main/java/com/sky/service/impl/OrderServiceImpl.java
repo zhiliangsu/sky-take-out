@@ -24,6 +24,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,8 @@ public class OrderServiceImpl implements OrderService {
     private UserMapper userMapper;
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     /**
      * 用户下单
@@ -156,7 +159,7 @@ public class OrderServiceImpl implements OrderService {
         // 因为开通的小程序不是商家版, 没有支付功能, 为方便测试这里直接调用支付成功接口修改订单状态
         paySuccess(ordersPaymentDTO.getOrderNumber());
         return OrderPaymentVO.builder()
-                .timeStamp(String.valueOf(LocalDateTime.of(2023, 1, 1,0,0,0)))
+                .timeStamp(String.valueOf(LocalDateTime.of(2023, 1, 1, 0, 0, 0)))
                 .build();
     }
 
@@ -179,6 +182,13 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(order);
+
+        // 实现来单提醒功能
+        Map map = new HashMap();
+        map.put("type", 1); // 消息类型: 1代表来单提醒 2代表催单提醒
+        map.put("orderId", ordersDB.getId()); // 订单id
+        map.put("content", "订单号: " + outTradeNo); // 提示消息: 订单号
+        webSocketServer.sendToAllClient(JSON.toJSONString(map));
     }
 
     /**
