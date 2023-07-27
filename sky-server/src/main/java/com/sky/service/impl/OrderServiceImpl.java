@@ -163,14 +163,14 @@ public class OrderServiceImpl implements OrderService {
         Orders ordersDB = orderMapper.getByNumber(outTradeNo);
 
         // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
-        Orders orders = Orders.builder()
+        Orders order = Orders.builder()
                 .id(ordersDB.getId())
                 .status(Orders.TO_BE_CONFIRMED)
                 .payStatus(Orders.PAID)
                 .checkoutTime(LocalDateTime.now())
                 .build();
 
-        orderMapper.update(orders);
+        orderMapper.update(order);
     }
 
     /**
