@@ -40,4 +40,13 @@
         </where>
         order by order_time desc
     </select>
+    <!--根据条件动态统计营业额-->
+    <select id="getSumByMap" resultType="java.lang.Double">
+        select sum(amount) from orders
+        <where>
+            <if test="begin != null">and order_time &gt;= #{begin}</if>
+            <if test="end != null">and order_time &lt;= #{end}</if>
+            <if test="status != null">and status=#{status}</if>
+        </where>
+    </select>
 </mapper>
