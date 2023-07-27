@@ -84,5 +84,13 @@ public interface OrderMapper {
      * @param map
      * @return
      */
-    Integer getCountByMap(Map map);
+    Integer getUserCountByMap(Map map);
+
+    /**
+     * 根据条件动态查询订单数据
+     *
+     * @param map
+     * @return
+     */
+    Integer getOrderCountByMap(Map map);
 }

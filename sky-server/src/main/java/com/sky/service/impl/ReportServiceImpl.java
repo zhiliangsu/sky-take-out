@@ -3,6 +3,7 @@ package com.sky.service.impl;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.service.ReportService;
+import com.sky.vo.OrderReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import lombok.extern.slf4j.Slf4j;
@@ -51,8 +52,7 @@ public class ReportServiceImpl implements ReportService {
         }
 
         // 封装TurnoverReportVO并返回
-        return TurnoverReportVO
-                .builder()
+        return TurnoverReportVO.builder()
                 .dateList(StringUtils.join(dateList, ","))
                 .turnoverList(StringUtils.join(turnoverList, ","))
                 .build();
@@ -80,12 +80,63 @@ public class ReportServiceImpl implements ReportService {
             // select count(id) from user where create_time <= end
             totalUserList.add(getUserCount(null, endTime));
         }
-        return UserReportVO.
-                builder()
+        return UserReportVO.builder()
                 .dateList(StringUtils.join(dateList, ","))
                 .newUserList(StringUtils.join(newUserList, ","))
                 .totalUserList(StringUtils.join(totalUserList, ","))
                 .build();
+    }
+
+    /**
+     * 统计规定时间区间内的订单数据
+     *
+     * @param begin
+     * @param end
+     * @return
+     */
+    @Override
+    public OrderReportVO getOrdersStatistics(LocalDate begin, LocalDate end) {
+        List<LocalDate> dateList = getDateList(begin, end);
+        List<Integer> orderCountList = new ArrayList<>();
+        List<Integer> validOrderCountList = new ArrayList<>();
+
+        for (LocalDate date : dateList) {
+            LocalDateTime beginTime = LocalDateTime.of(date, LocalTime.MIN);
+            LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
+            orderCountList.add(getOrderCount(beginTime, endTime, null));
+            validOrderCountList.add(getOrderCount(beginTime, endTime, Orders.COMPLETED));
+        }
+
+        Integer totalOrderCount = orderCountList.stream().reduce(Integer::sum).get();
+        Integer validOrderCount = validOrderCountList.stream().reduce(Integer::sum).get();
+        Double orderCompletionRate = 0.0;
+        if (totalOrderCount != 0) {
+            orderCompletionRate = validOrderCount.doubleValue() / totalOrderCount;
+        }
+
+        return OrderReportVO.builder()
+                .dateList(StringUtils.join(dateList, ","))
+                .orderCountList(StringUtils.join(orderCountList, ","))
+                .validOrderCountList(StringUtils.join(validOrderCountList, ","))
+                .totalOrderCount(totalOrderCount)
+                .validOrderCount(validOrderCount)
+                .orderCompletionRate(orderCompletionRate)
+                .build();
+    }
+
+    /**
+     * 根据传入的时间区间统计订单数量
+     *
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    private Integer getOrderCount(LocalDateTime beginTime, LocalDateTime endTime, Integer status) {
+        Map map = new HashMap<>();
+        map.put("begin", beginTime);
+        map.put("end", endTime);
+        map.put("status", status);
+        return orderMapper.getOrderCountByMap(map);
     }
 
     /**
@@ -99,7 +150,7 @@ public class ReportServiceImpl implements ReportService {
         Map map = new HashMap<>();
         map.put("begin", beginTime);
         map.put("end", endTime);
-        return orderMapper.getCountByMap(map);
+        return orderMapper.getUserCountByMap(map);
     }
 
     /**
