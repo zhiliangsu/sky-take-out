@@ -61,4 +61,15 @@ public class UserController {
 
         return Result.success(userLoginVO);
     }
+
+    /**
+     * 退出
+     *
+     * @return
+     */
+    @PostMapping("/logout")
+    @ApiOperation("退出")
+    public Result<String> logout() {
+        return Result.success();
+    }
 }
