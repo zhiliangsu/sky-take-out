@@ -8,10 +8,7 @@ import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.*;
-import com.sky.entity.AddressBook;
-import com.sky.entity.OrderDetail;
-import com.sky.entity.Orders;
-import com.sky.entity.ShoppingCart;
+import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
@@ -135,11 +132,11 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception {
-        /* // 当前登录用户id
+        // 当前登录用户id
         Long userId = BaseContext.getCurrentId();
         User user = userMapper.getById(userId);
 
-        // 调用微信支付接口，生成预支付交易单
+        /* // 调用微信支付接口，生成预支付交易单
         JSONObject jsonObject = weChatPayUtil.pay(
                 ordersPaymentDTO.getOrderNumber(), // 商户订单号
                 new BigDecimal(0.01), // 支付金额，单位 元
@@ -259,18 +256,17 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(Long id) throws Exception {
         // 根据id查询订单
         Orders order = orderMapper.getById(id);
-        Integer status = order.getStatus();
         // 校验订单是否存在
         if (order == null) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
         // 订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
-        if (status > 2) {
+        if (order.getStatus() > 2) {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
         // 订单处于待接单状态下取消, 需要进行退款
-        if (status == Orders.TO_BE_CONFIRMED) {
-            // 调用微信支付退款接口
+        if (order.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+            // 调用微信支付退款接口(因为开通的小程序不是商家版, 没有支付功能,暂时屏蔽)
             /* weChatPayUtil.refund(
                     order.getNumber(),  // 商户订单号
                     order.getNumber(),  // 商户退款单号
@@ -302,7 +298,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 根据订单id查询当前订单详情, 并把其中的所有菜品添加到购物车中
         List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(id);
-        /* // 方式一:
+        /* // 方式一: 增强for遍历
         for (OrderDetail orderDetail : orderDetails) {
             ShoppingCart shoppingCart = new ShoppingCart();
             BeanUtils.copyProperties(orderDetail, shoppingCart, "id");
@@ -331,6 +327,7 @@ public class OrderServiceImpl implements OrderService {
      * @param ordersPageQueryDTO
      * @return
      */
+    // 订单搜索接口自己写的版本
     @Override
     public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
         // 设置分页
@@ -360,6 +357,64 @@ public class OrderServiceImpl implements OrderService {
         }
         return new PageResult(ordersList.getTotal(), orderVOList);
     }
+
+    // 订单搜索接口参考答案
+    // /**
+    //  * 订单搜索
+    //  *
+    //  * @param ordersPageQueryDTO
+    //  * @return
+    //  */
+    // public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+    //     PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+    //
+    //     Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
+    //
+    //     // 部分订单状态，需要额外返回订单菜品信息，将Orders转化为OrderVO
+    //     List<OrderVO> orderVOList = getOrderVOList(page);
+    //
+    //     return new PageResult(page.getTotal(), orderVOList);
+    // }
+    //
+    // private List<OrderVO> getOrderVOList(Page<Orders> page) {
+    //     // 需要返回订单菜品信息，自定义OrderVO响应结果
+    //     List<OrderVO> orderVOList = new ArrayList<>();
+    //
+    //     List<Orders> ordersList = page.getResult();
+    //     if (!CollectionUtils.isEmpty(ordersList)) {
+    //         for (Orders orders : ordersList) {
+    //             // 将共同字段复制到OrderVO
+    //             OrderVO orderVO = new OrderVO();
+    //             BeanUtils.copyProperties(orders, orderVO);
+    //             String orderDishes = getOrderDishesStr(orders);
+    //
+    //             // 将订单菜品信息封装到orderVO中，并添加到orderVOList
+    //             orderVO.setOrderDishes(orderDishes);
+    //             orderVOList.add(orderVO);
+    //         }
+    //     }
+    //     return orderVOList;
+    // }
+    //
+    // /**
+    //  * 根据订单id获取菜品信息字符串
+    //  *
+    //  * @param orders
+    //  * @return
+    //  */
+    // private String getOrderDishesStr(Orders orders) {
+    //     // 查询订单菜品详情信息（订单中的菜品和数量）
+    //     List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
+    //
+    //     // 将每一条订单菜品信息拼接为字符串（格式：宫保鸡丁*3；）
+    //     List<String> orderDishList = orderDetailList.stream().map(x -> {
+    //         String orderDish = x.getName() + "*" + x.getNumber() + ";";
+    //         return orderDish;
+    //     }).collect(Collectors.toList());
+    //
+    //     // 将该订单对应的所有菜品信息拼接在一起
+    //     return String.join("", orderDishList);
+    // }
 
     /**
      * 各个状态的订单数量统计
@@ -415,7 +470,7 @@ public class OrderServiceImpl implements OrderService {
         // 确认订单支付状态,如果用户已支付,需要退款
         Integer payStatus = orderDB.getPayStatus();
         if (payStatus == Orders.PAID) {
-            // 调用微信支付退款接口
+            // 调用微信支付退款接口(因为开通的小程序不是商家版, 没有支付功能,暂时屏蔽)
             /* String refund = weChatPayUtil.refund(
                     orderDB.getNumber(),  // 商户订单号
                     orderDB.getNumber(),  // 商户退款单号
@@ -448,7 +503,7 @@ public class OrderServiceImpl implements OrderService {
         // 确认订单支付状态,如果用户已支付,需要退款
         Integer payStatus = orderDB.getPayStatus();
         if (payStatus == Orders.PAID) {
-            // 调用微信支付退款接口
+            // 调用微信支付退款接口(因为开通的小程序不是商家版, 没有支付功能,暂时屏蔽)
             /* String refund = weChatPayUtil.refund(
                     orderDB.getNumber(),  // 商户订单号
                     orderDB.getNumber(),  // 商户退款单号
